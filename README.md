@@ -77,6 +77,26 @@ automarket/
     └── img/                    # Carpeta para imagenes adicionales
 ```
 
+## Desplegar en Render
+
+1. Sube este proyecto a un repositorio de GitHub (o GitLab).
+2. Entra a [render.com](https://render.com) y crea una cuenta gratuita.
+3. Click en **New +** → **Web Service** y conecta tu repositorio.
+4. Configura:
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:app` (ya viene definido en el `Procfile`, Render lo detecta solo)
+5. Click en **Create Web Service**. Render instalará las dependencias y desplegará la app. En unos minutos tendrás una URL como `https://tu-app.onrender.com`.
+
+### Sobre la persistencia de datos en Render
+
+- **Plan gratuito**: el disco es efimero. Mientras la instancia siga activa, los cambios que hagas desde el panel de administrador (agregar/editar/vender vehiculos) se guardan con normalidad. Pero si el servicio se reinicia (por inactividad, redeploy, etc.) la base de datos vuelve a su estado inicial con los 30+ vehiculos de ejemplo.
+- **Persistencia real (plan pago con disco)**:
+  1. En el dashboard de Render, ve a tu servicio → **Disks** → **Add Disk**.
+  2. Asigna un **Mount Path**, por ejemplo `/var/data`.
+  3. En **Environment** agrega la variable `DATABASE_PATH` con el valor `/var/data/database.db`.
+  4. Vuelve a desplegar. A partir de ahi la base de datos vive en el disco persistente y sobrevive a reinicios y redeploys.
+
 ## Notas tecnicas
 
 - Las imagenes de los vehiculos se generan mediante placeholders con el nombre de marca/modelo (via placehold.co) para que el proyecto funcione sin necesidad de archivos de imagen locales. Puedes reemplazarlas subiendo tus propias imagenes a `static/img/` y actualizando el campo `image` de cada vehiculo desde el panel de administrador.
