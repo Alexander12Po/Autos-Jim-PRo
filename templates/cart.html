@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Carrito - AutoMarket Premium{% endblock %}
+{% block content %}
+
+<section class="page-header">
+  <h1>Carrito de Compras</h1>
+  <p>{{ vehicles|length }} vehiculo(s) en tu carrito</p>
+</section>
+
+<div class="cart-container">
+  {% if vehicles %}
+  <div class="cart-list">
+    {% for v in vehicles %}
+    <div class="cart-item">
+      <img src="{{ v.image }}" alt="{{ v.brand }} {{ v.model }}">
+      <div class="cart-item-info">
+        <h3>{{ v.brand }} {{ v.model }}</h3>
+        <p>{{ v.year }} &bull; {{ v.color }} &bull; {{ v.transmission }}</p>
+        <span class="qty-note">Cantidad: 1 (simulacion)</span>
+      </div>
+      <div class="cart-item-price">
+        <strong>${{ "{:,.0f}".format(v.price) }}</strong>
+        <a href="{{ url_for('cart_remove', vehicle_id=v.id) }}" class="remove-link"><i class="fa-solid fa-trash"></i> Eliminar</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="cart-summary">
+    <h3>Resumen de compra</h3>
+    <div class="summary-row"><span>Subtotal</span><span>${{ "{:,.2f}".format(subtotal) }}</span></div>
+    <div class="summary-row"><span>Impuestos (18%)</span><span>${{ "{:,.2f}".format(taxes) }}</span></div>
+    <div class="summary-row total"><span>Total</span><span>${{ "{:,.2f}".format(total) }}</span></div>
+    <a href="{{ url_for('cart_clear') }}" class="btn btn-outline btn-full">Vaciar carrito</a>
+    <a href="{{ url_for('catalog') }}" class="btn btn-primary btn-full">Seguir explorando</a>
+  </div>
+  {% else %}
+  <div class="empty-state-large">
+    <i class="fa-solid fa-cart-shopping"></i>
+    <h3>Tu carrito esta vacio</h3>
+    <p>Explora nuestro catalogo y agrega los vehiculos que te interesen.</p>
+    <a href="{{ url_for('catalog') }}" class="btn btn-primary">Ir al catalogo</a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

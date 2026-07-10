@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Financiamiento - AutoMarket Premium{% endblock %}
+{% block content %}
+
+<section class="page-header">
+  <h1>Simulacion de Financiamiento</h1>
+  <p>{{ vehicle.brand }} {{ vehicle.model }} {{ vehicle.year }} &bull; ${{ "{:,.0f}".format(vehicle.price) }}</p>
+</section>
+
+<div class="finance-container">
+  <div class="finance-vehicle-card">
+    <img src="{{ vehicle.image }}" alt="{{ vehicle.brand }} {{ vehicle.model }}">
+    <h3>{{ vehicle.brand }} {{ vehicle.model }}</h3>
+    <p>{{ vehicle.year }} &bull; {{ vehicle.color }} &bull; {{ vehicle.transmission }}</p>
+    <p class="detail-price">${{ "{:,.0f}".format(vehicle.price) }}</p>
+  </div>
+
+  <form method="POST" class="finance-form" id="financeForm">
+    <h3>Datos personales</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nombre *</label>
+        <input type="text" name="first_name" value="{{ form.get('first_name','') }}" required>
+      </div>
+      <div class="form-group">
+        <label>Apellidos *</label>
+        <input type="text" name="last_name" value="{{ form.get('last_name','') }}" required>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>DNI (ficticio) *</label>
+        <input type="text" name="dni" value="{{ form.get('dni','') }}" required minlength="5">
+      </div>
+      <div class="form-group">
+        <label>Telefono *</label>
+        <input type="tel" name="phone" value="{{ form.get('phone','') }}" required>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Correo electronico *</label>
+        <input type="email" name="email" value="{{ form.get('email','') }}" required>
+      </div>
+      <div class="form-group">
+        <label>Direccion *</label>
+        <input type="text" name="address" value="{{ form.get('address','') }}" required>
+      </div>
+    </div>
+
+    <h3>Condiciones de financiamiento</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Inicial ($)</label>
+        <input type="number" name="down_payment" id="downPayment" value="{{ form.get('down_payment', 0) }}" min="0" max="{{ vehicle.price - 1 }}" step="100">
+      </div>
+      <div class="form-group">
+        <label>Numero de cuotas</label>
+        <select name="installments" id="installments">
+          <option value="12">12 meses</option>
+          <option value="24">24 meses</option>
+          <option value="36" selected>36 meses</option>
+          <option value="48">48 meses</option>
+          <option value="60">60 meses</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Metodo de pago</label>
+      <select name="payment_method">
+        <option>Tarjeta de credito</option>
+        <option>Transferencia bancaria</option>
+        <option>Financiamiento bancario</option>
+        <option>Efectivo</option>
+      </select>
+    </div>
+
+    <div class="finance-preview" id="financePreview">
+      <div><span>Cuota mensual estimada</span><strong id="previewMonthly">$0</strong></div>
+      <div><span>Total a pagar</span><strong id="previewTotal">$0</strong></div>
+      <div><span>Intereses</span><strong id="previewInterest">$0</strong></div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-full btn-lg">Confirmar compra y generar factura</button>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const price = {{ vehicle.price }};
+const annualRate = 0.12;
+
+function updatePreview() {
+  const down = parseFloat(document.getElementById('downPayment').value) || 0;
+  const installments = parseInt(document.getElementById('installments').value) || 12;
+  const principal = Math.max(price - down, 0);
+  const monthlyRate = annualRate / 12;
+  let monthly;
+  if (monthlyRate > 0) {
+    monthly = (principal * monthlyRate * Math.pow(1 + monthlyRate, installments)) / (Math.pow(1 + monthlyRate, installments) - 1);
+  } else {
+    monthly = principal / installments;
+  }
+  const total = monthly * installments;
+  const interest = total - principal;
+
+  document.getElementById('previewMonthly').textContent = '$' + monthly.toLocaleString('en-US', {maximumFractionDigits: 2});
+  document.getElementById('previewTotal').textContent = '$' + total.toLocaleString('en-US', {maximumFractionDigits: 2});
+  document.getElementById('previewInterest').textContent = '$' + interest.toLocaleString('en-US', {maximumFractionDigits: 2});
+}
+
+document.getElementById('downPayment').addEventListener('input', updatePreview);
+document.getElementById('installments').addEventListener('change', updatePreview);
+updatePreview();
+</script>
+{% endblock %}

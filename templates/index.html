@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}AutoMarket Premium - Inicio{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <h1>Encuentra el auto de tus <span>sueños</span></h1>
+    <p>La experiencia mas exclusiva para comprar vehiculos de lujo, con financiamiento a tu medida y garantia premium.</p>
+    <div class="hero-buttons">
+      <a href="{{ url_for('catalog') }}" class="btn btn-primary">Explorar vehiculos <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="{{ url_for('about') }}" class="btn btn-outline">Conocer mas</a>
+    </div>
+  </div>
+</section>
+
+<section class="stats-section">
+  <div class="stats-container">
+    <div class="stat-card">
+      <i class="fa-solid fa-car"></i>
+      <h3>{{ stats.vehicles }}+</h3>
+      <p>Vehiculos disponibles</p>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-handshake"></i>
+      <h3>{{ stats.sold }}+</h3>
+      <p>Ventas realizadas</p>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-award"></i>
+      <h3>{{ stats.brands }}+</h3>
+      <p>Marcas premium</p>
+    </div>
+    <div class="stat-card">
+      <i class="fa-solid fa-users"></i>
+      <h3>{{ stats.clients }}+</h3>
+      <p>Clientes satisfechos</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Vehiculos Destacados</h2>
+    <p>Seleccion premium de nuestro inventario</p>
+  </div>
+  <div class="vehicle-grid">
+    {% for v in featured %}
+    <div class="vehicle-card fade-in">
+      <div class="vehicle-image">
+        <img src="{{ v.image }}" alt="{{ v.brand }} {{ v.model }}" loading="lazy">
+        <span class="vehicle-badge">{{ v.condition_status }}</span>
+      </div>
+      <div class="vehicle-info">
+        <h3>{{ v.brand }} {{ v.model }}</h3>
+        <p class="vehicle-year">{{ v.year }} &bull; {{ v.mileage }} km</p>
+        <p class="vehicle-price">${{ "{:,.0f}".format(v.price) }}</p>
+        <a href="{{ url_for('vehicle_detail', vehicle_id=v.id) }}" class="btn btn-full">Ver detalles</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="section-cta">
+    <a href="{{ url_for('catalog') }}" class="btn btn-primary">Ver catalogo completo</a>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="section-header">
+    <h2>Marcas Populares</h2>
+    <p>Trabajamos con las marcas mas prestigiosas del mundo</p>
+  </div>
+  <div class="brands-grid">
+    {% for b in brands %}
+    <a href="{{ url_for('catalog', brand=b.brand) }}" class="brand-chip">
+      <i class="fa-solid fa-car-side"></i>
+      <span>{{ b.brand }}</span>
+      <small>{{ b.total }} disponibles</small>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-header">
+    <h2>Lo que dicen nuestros clientes</h2>
+    <p>Miles de personas ya confiaron en AutoMarket Premium</p>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+      <p>"El proceso de compra fue rapido y transparente. El simulador de financiamiento me ayudo a elegir el plan perfecto."</p>
+      <div class="testimonial-author">
+        <div class="avatar">MJ</div>
+        <div><strong>Maria Jimenez</strong><span>Cliente verificado</span></div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+      <p>"Excelente atencion y un catalogo impresionante. Encontre mi BMW ideal en cuestion de minutos."</p>
+      <div class="testimonial-author">
+        <div class="avatar">CR</div>
+        <div><strong>Carlos Rodriguez</strong><span>Cliente verificado</span></div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i></div>
+      <p>"El comparador de vehiculos me permitio tomar la mejor decision entre tres modelos distintos. Muy recomendado."</p>
+      <div class="testimonial-author">
+        <div class="avatar">LP</div>
+        <div><strong>Laura Perez</strong><span>Cliente verificado</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

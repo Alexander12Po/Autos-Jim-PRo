@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Comparador - AutoMarket Premium{% endblock %}
+{% block content %}
+
+<section class="page-header">
+  <h1>Comparador de Vehiculos</h1>
+  <p>Compara hasta 4 vehiculos lado a lado</p>
+</section>
+
+<div class="compare-container">
+  {% if vehicles %}
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Vehiculo</th>
+        {% for v in vehicles %}
+        <th>
+          <img src="{{ v.image }}" alt="{{ v.brand }} {{ v.model }}">
+          <div>{{ v.brand }} {{ v.model }}</div>
+          <a href="{{ url_for('compare_remove', vehicle_id=v.id) }}" class="remove-link"><i class="fa-solid fa-xmark"></i> Quitar</a>
+        </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Precio</td>{% for v in vehicles %}<td>${{ "{:,.0f}".format(v.price) }}</td>{% endfor %}</tr>
+      <tr><td>Año</td>{% for v in vehicles %}<td>{{ v.year }}</td>{% endfor %}</tr>
+      <tr><td>Motor</td>{% for v in vehicles %}<td>{{ v.engine }}</td>{% endfor %}</tr>
+      <tr><td>Potencia</td>{% for v in vehicles %}<td>{{ v.power }}</td>{% endfor %}</tr>
+      <tr><td>Consumo</td>{% for v in vehicles %}<td>{{ v.consumption }}</td>{% endfor %}</tr>
+      <tr><td>Transmision</td>{% for v in vehicles %}<td>{{ v.transmission }}</td>{% endfor %}</tr>
+      <tr><td>Combustible</td>{% for v in vehicles %}<td>{{ v.fuel }}</td>{% endfor %}</tr>
+      <tr><td>Kilometraje</td>{% for v in vehicles %}<td>{{ "{:,}".format(v.mileage) }} km</td>{% endfor %}</tr>
+      <tr><td>Estado</td>{% for v in vehicles %}<td>{{ v.status }}</td>{% endfor %}</tr>
+      <tr><td></td>{% for v in vehicles %}<td><a href="{{ url_for('vehicle_detail', vehicle_id=v.id) }}" class="btn btn-primary btn-sm">Ver detalles</a></td>{% endfor %}</tr>
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state-large">
+    <i class="fa-solid fa-code-compare"></i>
+    <h3>Aun no has agregado vehiculos al comparador</h3>
+    <p>Ve al catalogo y selecciona hasta 4 vehiculos para comparar sus caracteristicas.</p>
+    <a href="{{ url_for('catalog') }}" class="btn btn-primary">Ir al catalogo</a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

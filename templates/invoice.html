@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Factura {{ order.order_number }} - AutoMarket Premium{% endblock %}
+{% block content %}
+
+<div class="invoice-wrapper">
+  <div class="invoice-actions no-print">
+    <button onclick="window.print()" class="btn btn-primary"><i class="fa-solid fa-print"></i> Imprimir factura</button>
+    <a href="{{ url_for('catalog') }}" class="btn btn-outline">Seguir explorando</a>
+  </div>
+
+  <div class="invoice-card" id="invoiceCard">
+    <div class="invoice-header">
+      <div>
+        <h2><i class="fa-solid fa-car-burst"></i> AutoMarket Premium</h2>
+        <p>Av. Principal 1234, Ciudad &bull; contacto@automarket.com</p>
+      </div>
+      <div class="invoice-number">
+        <span>Factura</span>
+        <h3>#{{ order.order_number }}</h3>
+        <p>{{ order.order_date }}</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="invoice-parties">
+      <div>
+        <h4>Cliente</h4>
+        <p>{{ order.first_name }} {{ order.last_name }}</p>
+        <p>DNI: {{ order.dni }}</p>
+        <p>{{ order.phone }}</p>
+        <p>{{ order.email }}</p>
+        <p>{{ order.address }}</p>
+      </div>
+      <div>
+        <h4>Vehiculo</h4>
+        <p>{{ order.vehicle_brand }} {{ order.vehicle_model }}</p>
+        <p>Año: {{ order.vehicle_year }}</p>
+        <p>Precio: ${{ "{:,.2f}".format(order.vehicle_price) }}</p>
+      </div>
+    </div>
+
+    <table class="invoice-table">
+      <thead>
+        <tr><th>Concepto</th><th>Detalle</th><th>Monto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Precio del vehiculo</td><td>-</td><td>${{ "{:,.2f}".format(order.vehicle_price) }}</td></tr>
+        <tr><td>Inicial</td><td>-</td><td>${{ "{:,.2f}".format(order.down_payment) }}</td></tr>
+        <tr><td>Metodo de pago</td><td>{{ order.payment_method }}</td><td>-</td></tr>
+        <tr><td>Cuotas</td><td>{{ order.installments }} meses</td><td>${{ "{:,.2f}".format(order.monthly_payment) }} /mes</td></tr>
+        <tr><td>Intereses totales</td><td>-</td><td>${{ "{:,.2f}".format(order.interest) }}</td></tr>
+        <tr class="invoice-total-row"><td colspan="2">Total a pagar (financiado)</td><td>${{ "{:,.2f}".format(order.total_payment) }}</td></tr>
+      </tbody>
+    </table>
+
+    <div class="invoice-footer">
+      <p>Gracias por confiar en AutoMarket Premium. Esta factura es una simulacion generada digitalmente.</p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

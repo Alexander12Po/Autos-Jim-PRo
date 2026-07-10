@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if vehicle else 'Agregar' }} Vehiculo - AutoMarket Premium{% endblock %}
+{% block content %}
+
+<section class="page-header">
+  <h1>{{ 'Editar Vehiculo' if vehicle else 'Agregar Vehiculo' }}</h1>
+  <p>Completa la informacion del vehiculo</p>
+</section>
+
+<form method="POST" class="admin-form" enctype="multipart/form-data">
+  <div class="form-row">
+    <div class="form-group">
+      <label>Marca *</label>
+      <input type="text" name="brand" value="{{ vehicle.brand if vehicle else '' }}" required>
+    </div>
+    <div class="form-group">
+      <label>Modelo *</label>
+      <input type="text" name="model" value="{{ vehicle.model if vehicle else '' }}" required>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Año *</label>
+      <input type="number" name="year" value="{{ vehicle.year if vehicle else 2024 }}" min="1990" max="2030" required>
+    </div>
+    <div class="form-group">
+      <label>Precio ($) *</label>
+      <input type="number" name="price" step="0.01" value="{{ vehicle.price if vehicle else '' }}" required>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Kilometraje *</label>
+      <input type="number" name="mileage" value="{{ vehicle.mileage if vehicle else 0 }}" required>
+    </div>
+    <div class="form-group">
+      <label>Color *</label>
+      <input type="text" name="color" value="{{ vehicle.color if vehicle else '' }}" required>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Combustible *</label>
+      <select name="fuel" required>
+        {% for f in ["Gasolina","Diesel","Hibrido","Electrico"] %}
+        <option value="{{ f }}" {% if vehicle and vehicle.fuel == f %}selected{% endif %}>{{ f }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Transmision *</label>
+      <select name="transmission" required>
+        {% for t in ["Automatica","Manual"] %}
+        <option value="{{ t }}" {% if vehicle and vehicle.transmission == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Condicion *</label>
+      <select name="condition_status" required>
+        {% for c in ["Nuevo","Usado"] %}
+        <option value="{{ c }}" {% if vehicle and vehicle.condition_status == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Estado *</label>
+      <select name="status" required>
+        {% for s in ["Disponible","Vendido"] %}
+        <option value="{{ s }}" {% if vehicle and vehicle.status == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Motor</label>
+      <input type="text" name="engine" value="{{ vehicle.engine if vehicle else '' }}">
+    </div>
+    <div class="form-group">
+      <label>Potencia</label>
+      <input type="text" name="power" value="{{ vehicle.power if vehicle else '' }}">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Consumo</label>
+    <input type="text" name="consumption" value="{{ vehicle.consumption if vehicle else '' }}">
+  </div>
+
+  <div class="form-group">
+    <label>URL de imagen (opcional, se genera una por defecto)</label>
+    <input type="text" name="image" value="{{ vehicle.image if vehicle else '' }}" placeholder="https://...">
+  </div>
+
+  <div class="form-group">
+    <label>Descripcion</label>
+    <textarea name="description" rows="3">{{ vehicle.description if vehicle else '' }}</textarea>
+  </div>
+
+  <div class="form-group">
+    <label>Caracteristicas (separadas por |)</label>
+    <textarea name="features" rows="2">{{ vehicle.features if vehicle else '' }}</textarea>
+  </div>
+
+  <button type="submit" class="btn btn-primary btn-full btn-lg">{{ 'Guardar cambios' if vehicle else 'Agregar vehiculo' }}</button>
+  <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline btn-full">Cancelar</a>
+</form>
+
+{% endblock %}
