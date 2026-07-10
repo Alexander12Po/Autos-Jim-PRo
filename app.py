@@ -19,10 +19,27 @@ from flask import (
 )
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-DB_PATH = os.path.join(BASE_DIR, "database.db")
+
+# Prioridad para ubicar la base de datos:
+# 1. Variable de entorno DATABASE_PATH (usar esto en Render si montas un disco
+#    persistente, ej: DATABASE_PATH=/var/data/database.db)
+# 2. /tmp si se detecta un entorno serverless de solo lectura (ej. Vercel)
+# 3. Carpeta del proyecto (ejecucion local con "python app.py")
+if os.environ.get("DATABASE_PATH"):
+    DB_PATH = os.environ["DATABASE_PATH"]
+elif os.environ.get("VERCEL") == "1":
+    DB_PATH = "/tmp/database.db"
+else:
+    DB_PATH = os.path.join(BASE_DIR, "database.db")
+
+# Si la ruta apunta a una carpeta que aun no existe (ej. disco de Render
+# recien montado), la creamos para evitar errores al abrir la base de datos.
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 app = Flask(__name__)
-app.secret_key = "automarket-premium-secret-key-2026-change-in-production"
+app.secret_key = os.environ.get(
+    "SECRET_KEY", "automarket-premium-secret-key-2026-change-in-production"
+)
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
@@ -501,271 +518,4 @@ def finance(vehicle_id):
         email = request.form.get("email", "").strip()
         address = request.form.get("address", "").strip()
         down_payment = float(request.form.get("down_payment", 0) or 0)
-        installments = int(request.form.get("installments", 12) or 12)
-        payment_method = request.form.get("payment_method", "Tarjeta de credito")
-
-        errors = []
-        if not first_name or not last_name:
-            errors.append("El nombre y apellido son obligatorios.")
-        if not dni or len(dni) < 5:
-            errors.append("Ingresa un DNI valido.")
-        if not phone:
-            errors.append("El telefono es obligatorio.")
-        if "@" not in email:
-            errors.append("Ingresa un correo electronico valido.")
-        if not address:
-            errors.append("La direccion es obligatoria.")
-        if down_payment < 0 or down_payment >= vehicle["price"]:
-            errors.append("La inicial debe ser menor al precio del vehiculo.")
-        if installments not in (12, 24, 36, 48, 60):
-            errors.append("Selecciona un numero de cuotas valido.")
-
-        if errors:
-            for e in errors:
-                flash(e, "error")
-            return render_template("finance.html", vehicle=vehicle, form=request.form)
-
-        # Calculo de financiamiento (interes simple anual del 12%)
-        annual_rate = 0.12
-        monthly_rate = annual_rate / 12
-        principal = vehicle["price"] - down_payment
-
-        if monthly_rate > 0:
-            monthly_payment = (
-                principal * monthly_rate * (1 + monthly_rate) ** installments
-            ) / ((1 + monthly_rate) ** installments - 1)
-        else:
-            monthly_payment = principal / installments
-
-        total_payment = monthly_payment * installments
-        interest = total_payment - principal
-
-        order_number = generate_order_number()
-        order_date = datetime.now().strftime("%d/%m/%Y %H:%M")
-
-        db.execute("""
-            INSERT INTO orders (order_number, order_date, vehicle_id, vehicle_brand,
-                vehicle_model, vehicle_year, vehicle_price, first_name, last_name, dni,
-                phone, email, address, down_payment, installments, payment_method,
-                monthly_payment, interest, total_payment)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """, (order_number, order_date, vehicle_id, vehicle["brand"], vehicle["model"],
-              vehicle["year"], vehicle["price"], first_name, last_name, dni, phone,
-              email, address, down_payment, installments, payment_method,
-              round(monthly_payment, 2), round(interest, 2), round(total_payment, 2)))
-        db.commit()
-
-        order_id = db.execute("SELECT last_insert_rowid() as id").fetchone()["id"]
-
-        # Marcar vehiculo como vendido
-        db.execute("UPDATE vehicles SET status = 'Vendido' WHERE id = ?", (vehicle_id,))
-        db.commit()
-
-        flash("Compra realizada con exito. Aqui tienes tu factura.", "success")
-        return redirect(url_for("invoice", order_id=order_id))
-
-    return render_template("finance.html", vehicle=vehicle, form={})
-
-
-@app.route("/factura/<int:order_id>")
-def invoice(order_id):
-    db = get_db()
-    order = db.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-    if not order:
-        flash("La factura solicitada no existe.", "error")
-        return redirect(url_for("index"))
-    return render_template("invoice.html", order=order)
-
-
-# --- Contacto / Acerca de ---
-
-@app.route("/contacto", methods=["GET", "POST"])
-def contact():
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip()
-        message = request.form.get("message", "").strip()
-
-        if not name or "@" not in email or not message:
-            flash("Por favor completa todos los campos correctamente.", "error")
-        else:
-            db = get_db()
-            db.execute(
-                "INSERT INTO contacts (name, email, message, created_at) VALUES (?, ?, ?, ?)",
-                (name, email, message, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-            )
-            db.commit()
-            flash("Tu mensaje ha sido enviado. Nos pondremos en contacto pronto.", "success")
-            return redirect(url_for("contact"))
-    return render_template("contact.html")
-
-
-@app.route("/acerca-de")
-def about():
-    return render_template("about.html")
-
-
-# ---------------------------------------------------------------------------
-# PANEL DE ADMINISTRADOR
-# ---------------------------------------------------------------------------
-
-@app.route("/admin/login", methods=["GET", "POST"])
-def admin_login():
-    if request.method == "POST":
-        username = request.form.get("username", "")
-        password = request.form.get("password", "")
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            session["is_admin"] = True
-            flash("Bienvenido al panel de administrador.", "success")
-            return redirect(url_for("admin_dashboard"))
-        flash("Usuario o contrasena incorrectos.", "error")
-    return render_template("admin_login.html")
-
-
-@app.route("/admin/logout")
-def admin_logout():
-    session.pop("is_admin", None)
-    flash("Sesion cerrada correctamente.", "info")
-    return redirect(url_for("admin_login"))
-
-
-@app.route("/admin")
-@login_required
-def admin_dashboard():
-    db = get_db()
-    total_vehicles = db.execute("SELECT COUNT(*) as c FROM vehicles").fetchone()["c"]
-    available = db.execute("SELECT COUNT(*) as c FROM vehicles WHERE status='Disponible'").fetchone()["c"]
-    sold = db.execute("SELECT COUNT(*) as c FROM vehicles WHERE status='Vendido'").fetchone()["c"]
-    total_orders = db.execute("SELECT COUNT(*) as c FROM orders").fetchone()["c"]
-    revenue = db.execute("SELECT COALESCE(SUM(vehicle_price),0) as s FROM orders").fetchone()["s"]
-    by_brand = db.execute(
-        "SELECT brand, COUNT(*) as total FROM vehicles GROUP BY brand ORDER BY total DESC"
-    ).fetchall()
-    recent_orders = db.execute(
-        "SELECT * FROM orders ORDER BY id DESC LIMIT 5"
-    ).fetchall()
-    vehicles = db.execute("SELECT * FROM vehicles ORDER BY id DESC").fetchall()
-
-    return render_template(
-        "admin_dashboard.html",
-        stats={
-            "total": total_vehicles,
-            "available": available,
-            "sold": sold,
-            "orders": total_orders,
-            "revenue": revenue,
-        },
-        by_brand=by_brand,
-        recent_orders=recent_orders,
-        vehicles=vehicles,
-    )
-
-
-@app.route("/admin/vehiculo/nuevo", methods=["GET", "POST"])
-@login_required
-def admin_vehicle_new():
-    if request.method == "POST":
-        data = request.form
-        image = data.get("image") or (
-            f"https://placehold.co/640x420/1a1a2e/f5f5f5?text="
-            f"{data.get('brand','Auto').replace(' ', '+')}+{data.get('model','').replace(' ', '+')}"
-        )
-        db = get_db()
-        db.execute("""
-            INSERT INTO vehicles (brand, model, year, price, mileage, fuel, transmission,
-                color, condition_status, status, engine, power, consumption, description,
-                features, image, created_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-        """, (
-            data.get("brand"), data.get("model"), int(data.get("year")),
-            float(data.get("price")), int(data.get("mileage")), data.get("fuel"),
-            data.get("transmission"), data.get("color"), data.get("condition_status"),
-            data.get("status", "Disponible"), data.get("engine"), data.get("power"),
-            data.get("consumption"), data.get("description"), data.get("features"),
-            image, datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        ))
-        db.commit()
-        flash("Vehiculo agregado correctamente.", "success")
-        return redirect(url_for("admin_dashboard"))
-    return render_template("admin_vehicle_form.html", vehicle=None)
-
-
-@app.route("/admin/vehiculo/editar/<int:vehicle_id>", methods=["GET", "POST"])
-@login_required
-def admin_vehicle_edit(vehicle_id):
-    db = get_db()
-    vehicle = db.execute("SELECT * FROM vehicles WHERE id = ?", (vehicle_id,)).fetchone()
-    if not vehicle:
-        flash("Vehiculo no encontrado.", "error")
-        return redirect(url_for("admin_dashboard"))
-
-    if request.method == "POST":
-        data = request.form
-        db.execute("""
-            UPDATE vehicles SET brand=?, model=?, year=?, price=?, mileage=?, fuel=?,
-                transmission=?, color=?, condition_status=?, status=?, engine=?, power=?,
-                consumption=?, description=?, features=?, image=?
-            WHERE id = ?
-        """, (
-            data.get("brand"), data.get("model"), int(data.get("year")),
-            float(data.get("price")), int(data.get("mileage")), data.get("fuel"),
-            data.get("transmission"), data.get("color"), data.get("condition_status"),
-            data.get("status"), data.get("engine"), data.get("power"),
-            data.get("consumption"), data.get("description"), data.get("features"),
-            data.get("image"), vehicle_id,
-        ))
-        db.commit()
-        flash("Vehiculo actualizado correctamente.", "success")
-        return redirect(url_for("admin_dashboard"))
-
-    return render_template("admin_vehicle_form.html", vehicle=vehicle)
-
-
-@app.route("/admin/vehiculo/eliminar/<int:vehicle_id>", methods=["POST"])
-@login_required
-def admin_vehicle_delete(vehicle_id):
-    db = get_db()
-    db.execute("DELETE FROM vehicles WHERE id = ?", (vehicle_id,))
-    db.commit()
-    flash("Vehiculo eliminado correctamente.", "success")
-    return redirect(url_for("admin_dashboard"))
-
-
-@app.route("/admin/vehiculo/vendido/<int:vehicle_id>", methods=["POST"])
-@login_required
-def admin_vehicle_toggle_sold(vehicle_id):
-    db = get_db()
-    vehicle = db.execute("SELECT * FROM vehicles WHERE id = ?", (vehicle_id,)).fetchone()
-    if vehicle:
-        new_status = "Vendido" if vehicle["status"] == "Disponible" else "Disponible"
-        db.execute("UPDATE vehicles SET status = ? WHERE id = ?", (new_status, vehicle_id))
-        db.commit()
-        flash(f"Vehiculo marcado como {new_status}.", "success")
-    return redirect(url_for("admin_dashboard"))
-
-
-# ---------------------------------------------------------------------------
-# API AUXILIAR (busqueda en tiempo real)
-# ---------------------------------------------------------------------------
-
-@app.route("/api/buscar")
-def api_search():
-    q = request.args.get("q", "").strip()
-    db = get_db()
-    if not q:
-        return jsonify([])
-    rows = db.execute(
-        "SELECT id, brand, model, year, price, image FROM vehicles "
-        "WHERE brand LIKE ? OR model LIKE ? LIMIT 8",
-        (f"%{q}%", f"%{q}%"),
-    ).fetchall()
-    return jsonify([dict(r) for r in rows])
-
-
-# ---------------------------------------------------------------------------
-# MAIN
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    init_db()
-    app.run(debug=True, host="0.0.0.0", port=5000)
+        installments = int(request.form.get("install
