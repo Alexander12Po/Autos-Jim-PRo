@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoLux Kids · Showroom de Coches de Lujo</title>
+
+<!-- Tipografías: Poppins (titulares con carácter), Inter (texto), JetBrains Mono (datos/specs) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- CABECERA / MARCA -->
+<!-- ============================================================ -->
+<header class="top-bar">
+  <div class="brand">
+    <span class="brand-badge">✦</span>
+    <div class="brand-text">
+      <h1>AutoLux <span>Kids</span></h1>
+      <p>Tu showroom fantástico de coches de lujo</p>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="showroom">🏁 Showroom</button>
+    <button class="tab-btn" data-tab="garaje">🏆 Mi Garaje</button>
+  </nav>
+
+  <div class="wallet">
+    <span class="wallet-icon">🪙</span>
+    <div class="wallet-info">
+      <strong id="saldo-actual">0</strong>
+      <small>LuxCoins</small>
+    </div>
+    <button id="btn-reiniciar" title="Reiniciar partida">↺</button>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<!-- SECCIÓN SHOWROOM -->
+<!-- ============================================================ -->
+<main>
+  <section id="vista-showroom" class="vista activa">
+    <div class="intro-showroom">
+      <h2>Elige tu coche de ensueño</h2>
+      <p>Explora, gira el foco y descubre la ficha de cada superdeportivo. ¡Nada es real, todo es diversión! 🎉</p>
+    </div>
+
+    <div id="grid-coches" class="grid-coches">
+      <!-- Las tarjetas de coches se generan aquí por JavaScript -->
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- SECCIÓN MI GARAJE -->
+  <!-- ============================================================ -->
+  <section id="vista-garaje" class="vista">
+    <div class="intro-showroom">
+      <h2>Tu colección de campeón</h2>
+      <p>Aquí guardas todos los coches que has "comprado". ¡Puedes venderlos si quieres cambiar de flota!</p>
+    </div>
+
+    <div id="garaje-vacio" class="garaje-vacio">
+      <span>🅿️</span>
+      <p>Tu garaje está vacío. ¡Ve al Showroom y consigue tu primer coche!</p>
+    </div>
+
+    <div id="grid-garaje" class="grid-coches">
+      <!-- Los coches comprados se generan aquí por JavaScript -->
+    </div>
+  </section>
+</main>
+
+<!-- ============================================================ -->
+<!-- MODAL: FICHA TÉCNICA DEL COCHE -->
+<!-- ============================================================ -->
+<div id="modal-ficha" class="modal-overlay">
+  <div class="modal-ficha">
+    <button class="modal-cerrar" data-close>✕</button>
+
+    <div class="ficha-escenario">
+      <div class="foco-luz"></div>
+      <div class="pedestal"></div>
+      <div id="ficha-svg-slot" class="ficha-svg-slot"></div>
+    </div>
+
+    <div class="ficha-contenido">
+      <span id="ficha-rareza" class="chip-rareza">Rara</span>
+      <p class="ficha-marca" id="ficha-marca">Marca</p>
+      <h3 id="ficha-modelo">Modelo</h3>
+      <p class="ficha-apodo" id="ficha-apodo">"Apodo"</p>
+      <p class="ficha-descripcion" id="ficha-descripcion">Descripción</p>
+
+      <div class="specs-grid">
+        <div class="spec">
+          <span class="spec-label">Potencia</span>
+          <span class="spec-valor" id="spec-potencia">0 HP</span>
+          <div class="spec-barra"><i id="barra-potencia"></i></div>
+        </div>
+        <div class="spec">
+          <span class="spec-label">Vel. máxima</span>
+          <span class="spec-valor" id="spec-velocidad">0 km/h</span>
+          <div class="spec-barra"><i id="barra-velocidad"></i></div>
+        </div>
+        <div class="spec">
+          <span class="spec-label">0-100 km/h</span>
+          <span class="spec-valor" id="spec-aceleracion">0 s</span>
+          <div class="spec-barra"><i id="barra-aceleracion"></i></div>
+        </div>
+        <div class="spec">
+          <span class="spec-label">Plazas</span>
+          <span class="spec-valor" id="spec-plazas">0</span>
+          <div class="spec-barra"><i id="barra-plazas"></i></div>
+        </div>
+      </div>
+
+      <div class="ficha-precio">
+        <span>Precio</span>
+        <strong id="ficha-precio-valor">0 🪙</strong>
+      </div>
+
+      <button id="btn-comprar" class="btn-comprar">Comprar este coche</button>
+      <p id="ficha-aviso" class="ficha-aviso"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: CONFIRMAR NOMBRE DEL PILOTO -->
+<!-- ============================================================ -->
+<div id="modal-nombre" class="modal-overlay">
+  <div class="modal-pequeno">
+    <button class="modal-cerrar" data-close>✕</button>
+    <h3>¿Cómo te llamas, piloto? 🏎️</h3>
+    <p>Tu nombre aparecerá en el recibo de compra.</p>
+    <input id="input-nombre" type="text" maxlength="40" placeholder="Escribe tu nombre...">
+    <button id="btn-confirmar-compra" class="btn-comprar">Confirmar compra</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: RECIBO / ÉXITO DE COMPRA -->
+<!-- ============================================================ -->
+<div id="modal-exito" class="modal-overlay">
+  <div class="modal-pequeno modal-exito">
+    <button class="modal-cerrar" data-close>✕</button>
+    <div class="exito-trofeo">🏆</div>
+    <h3>¡Felicidades!</h3>
+    <p id="exito-texto">Ya eres el orgulloso dueño de un coche nuevo.</p>
+    <div class="recibo" id="recibo-detalle"></div>
+    <button class="btn-comprar" data-close>Ir a mi garaje</button>
+  </div>
+</div>
+
+<!-- Lienzo para el confeti de celebración -->
+<canvas id="canvas-confeti"></canvas>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
